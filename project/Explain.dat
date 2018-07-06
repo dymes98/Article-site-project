@@ -1,0 +1,904 @@
+<p>The articles site is a site for creating articles and publishing so everyone can use them and comment on them. This site is structurally different from the release site, because both should have content and posts shared.</p>
+<p>Python has been used to build this site and we have used sqlite3 for its database.</p>
+<p>At this site, we first connect to the database or, if there were not, the database will be built [sqlite3.connect('DataBase.db')] Then, the Users table is created and we add an admin user to this table whose id is one and its username and password are admin, then the Articles and Comments and Likes tables are created and we create an article in the articles table explaining the structure The site is written in it.</p>
+<p>Home and about pages using the command return render_template ('page.html') Opens their html page.</p>
+<p>/article :</p>
+<p>The article page opens, in which there are all article titles that, if there is no article on this page, sends a message and if you have not logged in, you will also have a message that is just for information and you will not log in. You can view the articles and comments of users, but you can not comment or like.
+<p>On this page, the database is sent to all the existing articles and likes articles, so that the user can see what articles he likes.</p>
+
+<p>/article/string:id/ :</p>
+<p>Opens the article page and opens the article if the user wants to read an article and click on the title of that article that appears on the Articles page. Using the article's id, taken from the article page, an article from the DataBase And displayed on this page and sent to this page like and comments that are relevant to this article.</p>
+<p>If the user has logged in, the button like and write comments will be displayed, and if not logged in, it can only view comments and similar users.</p>
+<p>with session.get('logged_in')You can find out whether the user has logged in. If logged in, its value is True and otherwise its value is None, which applies when logged in.</p>
+
+
+<p>/article/string:id/like_article/ :</p>
+
+<p>An address that opens when you click the like button on the article page that refers only to the DataBase, and the user who likes an article likes to the Likes table, and the article page that has been featured is open, and according to That the id of the article is available and the user id that is logged in using session ['id'], which is logged when logged in, can be obtained and it can be understood whether this user liked the article.</p>
+
+<p>/article/string:id/dislike_article/ :</p>
+
+<p>An address that opens when you click the dislike button on the article page, which refers only to the DataBase, and the user who dislikes an article removes the Likes table, and opens the article page that the article is disappointed with.</p>
+
+<p>The RegisterForm class determines the structure of the registration form, for example, the username must be between 4 and 25 characters.</p>
+
+<p>/register :</p>
+
+<p>The user registration page can be used by using the form.validate () command to ensure that the structure described above is met, and then if checked, it should be checked that the password and confirm password sections match whether or not And if it was equal, it turns out that checking the login has already been registered. If there is such a username, it should provide the appropriate message because the username for each user should be unique, and if the username was not already there, it could be placed in the Users table and went to the login page.</p>
+
+<p>/profile :</p>
+
+<p>For changes to the information that is logged in the register and is associated with opening the profile page, first, using the session ['id'], return the information in the Articles table to the textboxes of the profile.html page (except password). Then use form.validate () to examine the form's terms and if the conditions are correct, we will transfer the textbox information to the page with request.form [''] into the variables you want, and if the new username is with the username The users are no longer equal and the password is equal to the comfrim password. The information in the Users table is updated and a proper message is given.</p>
+
+<p>/delete_comment/string:id :</p>
+
+<p>To remove the comment, the id is sent in the comment and can be deleted by looking at the Comments table and went to the article page where the comment was selected from.</p>
+
+<p>/login :</p>
+
+<p>To log in, first we will take the username and password from the login page and look up the Users table if the username and password match, we set the sessions and then message if there was a username and password. That was the wrong message 'Invalid login' and if the username was incorrect, the 'user not found' message is displayed.</p>
+
+<p>/logout :</p>
+
+<p>It is used to logout and also for session is None and to go to the login page.</p>
+
+<p>/dashboard :</p>
+
+<p>To see articles written by the user using session ['id'] and referring to the articles table, this is possible and if id is identical to that of admin, all articles are displayed, but if there is one Only the articles written by that id are displayed and using the len () function, you can find the number of rows returned by the dataBase if it was zero, the message 'No Articles Found' would be displayed.</p>
+
+<p>The ArticleForm class is also used for the form specified for writing articles.</p>
+
+<p>/add_article :</p>
+
+<p>Go to the add_article page and get the title and body of the form and if the information entered does not match the ArticleForm class, go to the DataBase and enter the article in the articles table, and the time and date are also obtained using the following code and the message It goes to the dashboard page:</p>
+
+<p>unix=time.time()</p>
+
+
+<p>create_date=str(datetime.datetime.fromtimestamp(unix).strftime('%Y-%m-%d %H:%M:%S'))</p>
+
+
+<p>/edit_article/string:id :</p>
+
+
+<p>Goes to edit_article and uses the id of the article that is given on the page to the articles table and takes the information with this id and adds to the textboxes of the page, and when the update button is clicked, refer to the table and The page information is transmitted to the table and an appropriate message is given and it is cleared using the return redirect (url_for ('dashboard')) and goes straight to / dashboard.</p>
+
+
+<p>/delete_article/string:id/ :</p>
+
+<p>Using the id taken from the page, go to the Articles table and delete the article with this id. It is important to note that when the article is deleted, it should be removed like and comments that relate to that article because the id of the existing article It is also simple</p>
+
+<p>______________________________________________________________________________________________________________________________________________________________________________</p>
+<p>______________________________________________________________________________________________________________________________________________________________________________</p>
+<p><span style="font-size:24px"><strong>code :</strong></span></p>
+
+
+<p>from flask import Flask,render_template,session, request, flash,redirect,url_for,logging</p>
+
+<p>from flask_wtf import FlaskForm</p>
+
+<p>from os import stat</p>
+
+<p>from wtforms import form,StringField,TextAreaField,PasswordField,validators</p>
+
+<p>from sqlalchemy.orm import sessionmaker</p>
+
+<p>from functools import wraps</p>
+
+<p>import datetime, time</p>
+
+<p>import sqlite3</p>
+
+<p>&nbsp;</p>
+
+<p>app = Flask(__name__)</p>
+
+<p>&nbsp;</p>
+
+<p>conn=sqlite3.connect(&#39;DataBase.db&#39;)</p>
+
+<p>c=conn.cursor()</p>
+
+<p>c.execute(&#39;CREATE TABLE IF NOT EXISTS Users (id INTEGER PRIMARY KEY AUTOINCREMENT,name NVARCHAR(20) , email TEXT , username TEXT , password TEXT)&#39;)</p>
+
+<p>c.execute(&#39;SELECT * FROM Users&#39;)</p>
+
+<p>if len(c.fetchall())==0 :</p>
+
+<p>c.execute(&#39;INSERT INTO Users (name,email,username,password) VALUES (&quot;Habiballah Khosravi&quot;,&quot;habiballah_khosravi@yahoo.com&quot;,&quot;admin&quot;,&quot;admin&quot;)&#39;)</p>
+
+<p>c.execute(&#39;CREATE TABLE IF NOT EXISTS Articles(id INTEGER PRIMARY KEY AUTOINCREMENT,title NVARCHAR(100),id_creat INTEGER,writer NVARCHAR(20),body NVARCHAR(100000),create_date TEXT)&#39;)</p>
+
+<p>&nbsp;</p>
+
+<p>c.execute(&#39;CREATE TABLE IF NOT EXISTS Comments (id INTEGER PRIMARY KEY AUTOINCREMENT,id_article INTEGER,comment NVARCHAR(30),id_user INTEGER,username TEXT , create_date TEXT)&#39;)</p>
+
+<p>c.execute(&#39;CREATE TABLE IF NOT EXISTS Likes (id INTEGER PRIMARY KEY AUTOINCREMENT,id_article INTEGER,id_user INTEGER,username TEXT )&#39;)</p>
+
+<p>conn.commit()</p>
+
+<p>&nbsp;</p>
+
+<p>create_date=&#39;2018-07-05 20:50:27&#39;</p>
+
+<p>title=&#39;Structure&#39;</p>
+
+<p>file = open(&quot;Explain.dat&quot;, &quot;r&quot; )</p>
+
+<p>body=file.read()</p>
+
+<p>file.close()</p>
+
+<p>c.execute(&#39;SELECT * FROM Articles&#39;)</p>
+
+<p>if len(c.fetchall())==0 :</p>
+
+<p>c.execute(&#39;INSERT INTO Articles(title,id_creat,body,writer,create_date) VALUES(? , ? , ? , ? , ?)&#39;,(title,1,body,&#39;admin&#39;,create_date))</p>
+
+<p>conn.commit()</p>
+
+<p>c.close()</p>
+
+<p>conn.close()</p>
+
+<p>&nbsp;</p>
+
+<p>@app.route(&#39;/&#39;)</p>
+
+<p>def home():</p>
+
+<p>return render_template (&#39;home.html&#39;)</p>
+
+<p>&nbsp;</p>
+
+<p>@app.route(&#39;/about&#39;)</p>
+
+<p>def about():</p>
+
+<p>return render_template (&#39;about.html&#39;)</p>
+
+<p>&nbsp;</p>
+
+<p>@app.route(&#39;/articles&#39;)</p>
+
+<p>def articles():</p>
+
+<p>conn=sqlite3.connect(&#39;DataBase.db&#39;)</p>
+
+<p>c=conn.cursor()</p>
+
+<p>c.execute(&#39;SELECT * FROM Articles&#39;)</p>
+
+<p>&nbsp;</p>
+
+<p>articles=[dict(id=row[0],</p>
+
+<p>title=row[1],</p>
+
+<p>writer=row[3],</p>
+
+<p>body=row[4],</p>
+
+<p>username=row[5]) for row in c.fetchall()]</p>
+
+<p>result_article = len(articles)</p>
+
+<p>conn.commit()</p>
+
+<p>if session.get(&#39;logged_in&#39;) == True :</p>
+
+<p>id_user=session[&#39;id&#39;]</p>
+
+<p>c.execute(&#39;SELECT * FROM Likes WHERE id_user=?&#39;,[id_user])</p>
+
+<p>likes=[dict(id=row[0],</p>
+
+<p>id_article=row[1],</p>
+
+<p>id_user=row[2],</p>
+
+<p>username=row[3]) for row in c.fetchall()]</p>
+
+<p>result_like = len(likes)</p>
+
+<p>if result_article &gt; 0 :</p>
+
+<p>return render_template(&#39;articles.html&#39; , articles=articles ,likes=likes , result_like=result_like )</p>
+
+<p>else:</p>
+
+<p>msg = &#39;NO Articles Found&#39;</p>
+
+<p>return render_template(&#39;articles.html&#39; , msg=msg)</p>
+
+<p>conn.commit()</p>
+
+<p>c.close()</p>
+
+<p>conn.close()</p>
+
+<p>elif result_article == 0 :</p>
+
+<p>error = &#39;Dont Login&#39;</p>
+
+<p>msg = &#39;NO Articles Found&#39;</p>
+
+<p>return render_template(&#39;articles.html&#39; , error=error , msg=msg)</p>
+
+<p>else:</p>
+
+<p>error = &#39;Dont Login&#39;</p>
+
+<p>return render_template(&#39;articles.html&#39; , articles=articles ,error=error)</p>
+
+<p>&nbsp;</p>
+
+<p>@app.route(&#39;/article/&lt;string:id&gt;/&#39; , methods=[&#39;GET&#39;,&#39;POST&#39;])</p>
+
+<p>def article(id):</p>
+
+<p>&nbsp;</p>
+
+<p>conn=sqlite3.connect(&#39;DataBase.db&#39;)</p>
+
+<p>c=conn.cursor()</p>
+
+<p>&nbsp;</p>
+
+<p>c.execute(&#39;SELECT * FROM Articles WHERE id = ?&#39;,[id])</p>
+
+<p>for row in c.fetchall() :</p>
+
+<p>id_article=row[0]</p>
+
+<p>title=row[1]</p>
+
+<p>writer=row[3]</p>
+
+<p>body=row[4]</p>
+
+<p>create_date=row[5]</p>
+
+<p>&nbsp;</p>
+
+<p>c.execute(&#39;SELECT * FROM Likes WHERE id_article=?&#39;,[id])</p>
+
+<p>likes=[dict(id=row[0],</p>
+
+<p>id_article=row[1],</p>
+
+<p>id_user=row[2],</p>
+
+<p>username=row[3]) for row in c.fetchall()]</p>
+
+<p>c.execute(&#39;SELECT * FROM Comments WHERE id_article = ?&#39;,(id))</p>
+
+<p>comments=[dict(id=row[0],</p>
+
+<p>id_article=row[1],</p>
+
+<p>comment=row[2],</p>
+
+<p>id_user=row[3],</p>
+
+<p>username=row[4],</p>
+
+<p>create_date=row[5]) for row in c.fetchall()]</p>
+
+<p>&nbsp;</p>
+
+<p>if session.get(&#39;logged_in&#39;) == True :</p>
+
+<p>id_user=session[&#39;id&#39;]</p>
+
+<p>username=session[&#39;username&#39;]</p>
+
+<p>&nbsp;</p>
+
+<p>c.execute(&#39;SELECT * FROM Likes WHERE id_article=? AND id_user=?&#39;,[id,id_user])</p>
+
+<p>liked=len(c.fetchall())</p>
+
+<p>&nbsp;</p>
+
+<p>if request.method == &#39;POST&#39; :</p>
+
+<p>comment=request.form[&#39;comment&#39;]</p>
+
+<p>unix=time.time()</p>
+
+<p>create_date=str(datetime.datetime.fromtimestamp(unix).strftime(&#39;%Y-%m-%d %H:%M:%S&#39;))</p>
+
+<p>c.execute(&#39;INSERT INTO Comments (id_article,comment,id_user,username,create_date) VALUES (?,?,?,?,?)&#39;,(id,comment,id_user,username,create_date))</p>
+
+<p>conn.commit()</p>
+
+<p>c.execute(&#39;SELECT * FROM Comments WHERE id_article = ?&#39;,(id))</p>
+
+<p>comments=[dict(id=row[0],</p>
+
+<p>id_article=row[1],</p>
+
+<p>comment=row[2],</p>
+
+<p>id_user=row[3],</p>
+
+<p>username=row[4],</p>
+
+<p>create_date=row[5]) for row in c.fetchall()]</p>
+
+<p>c.close()</p>
+
+<p>conn.close()</p>
+
+<p>return render_template (&#39;article.html&#39;, liked=liked ,likes=likes, id_article=id_article , id_user=id_user , title=title , writer=writer , body=body , create_date=create_date , comments=comments)</p>
+
+<p>else :</p>
+
+<p>return render_template (&#39;article.html&#39;,likes=likes, id_article=id_article , title=title , writer=writer , body=body , create_date=create_date , comments=comments)</p>
+
+<p>&nbsp;</p>
+
+<p>@app.route(&#39;/article/&lt;string:id&gt;/like_article/&#39; , methods=[&#39;GET&#39;,&#39;POST&#39;])</p>
+
+<p>def like_article(id):</p>
+
+<p>&nbsp;</p>
+
+<p>conn=sqlite3.connect(&#39;DataBase.db&#39;)</p>
+
+<p>c=conn.cursor()</p>
+
+<p>id_user=session[&#39;id&#39;]</p>
+
+<p>username=session[&#39;username&#39;]</p>
+
+<p>c.execute(&#39;INSERT INTO Likes (id_article,id_user,username) VALUES (?, ? , ?)&#39;,(id,id_user,username))</p>
+
+<p>conn.commit()</p>
+
+<p>c.close()</p>
+
+<p>conn.close()</p>
+
+<p>&nbsp;</p>
+
+<p>return redirect(url_for(&#39;article&#39;, id=id))</p>
+
+<p><br />
+&nbsp;</p>
+
+<p>@app.route(&#39;/article/&lt;string:id&gt;/dislike_article/&#39; , methods=[&#39;GET&#39;,&#39;POST&#39;])</p>
+
+<p>def dislike_article(id):</p>
+
+<p>&nbsp;</p>
+
+<p>conn=sqlite3.connect(&#39;DataBase.db&#39;)</p>
+
+<p>c=conn.cursor()</p>
+
+<p>id_user=session[&#39;id&#39;]</p>
+
+<p>c.execute(&#39;DELETE FROM Likes WHERE id_article =? AND id_user=?&#39;,(id,id_user))</p>
+
+<p>conn.commit()</p>
+
+<p>c.close()</p>
+
+<p>conn.close()</p>
+
+<p>&nbsp;</p>
+
+<p>return redirect(url_for(&#39;article&#39;, id=id))</p>
+
+<p><br />
+&nbsp;</p>
+
+<p>class RegisterForm(form.Form):</p>
+
+<p>name=StringField(u&#39;Name&#39;,validators=[validators.Length(min=1 , max=20)])</p>
+
+<p>email=StringField(u&#39;Email&#39;,validators=[validators.Length(min=6 , max=30)])</p>
+
+<p>username = StringField(u&#39;Username&#39;,validators=[validators.Length(min=4 , max=25)])</p>
+
+<p>password=PasswordField(u&#39;Password&#39;, validators=[validators.DataRequired()])</p>
+
+<p>confrim=PasswordField(u&#39;Confrim Password&#39;)</p>
+
+<p>&nbsp;</p>
+
+<p>@app.route(&#39;/register&#39;, methods=[&#39;GET&#39;,&#39;POST&#39;])</p>
+
+<p>def register():</p>
+
+<p>form=RegisterForm(request.form)</p>
+
+<p>if request.method == &#39;POST&#39; and form.validate() :</p>
+
+<p>name=form.name.data</p>
+
+<p>email=form.email.data</p>
+
+<p>username=form.username.data</p>
+
+<p>password=form.password.data</p>
+
+<p>confrim=form.confrim.data</p>
+
+<p>if confrim!=password :</p>
+
+<p>error=&#39;Passwords do not match&#39;</p>
+
+<p>return render_template(&#39;register.html&#39; , error=error , form=form)</p>
+
+<p>else:</p>
+
+<p>conn=sqlite3.connect(&#39;DataBase.db&#39;)</p>
+
+<p>c=conn.cursor()</p>
+
+<p>c.execute(&#39;SELECT * FROM Users WHERE username = ?&#39;,[username])</p>
+
+<p>result=c.fetchall()</p>
+
+<p>if len(result)==0 :</p>
+
+<p>c.execute(&#39;INSERT INTO Users (name,email,username,password) VALUES (? ,? ,? ,?)&#39;,(name,email,username,password))</p>
+
+<p>flash(str(name) + &#39; are registered and can log in&#39; , &#39;success&#39;)</p>
+
+<p>else:</p>
+
+<p>error=&#39;This username ( &#39;+str(username) + &#39; ) has been exists&#39;</p>
+
+<p>return render_template(&#39;register.html&#39; , error=error , form=form)</p>
+
+<p>&nbsp;</p>
+
+<p>conn.commit()</p>
+
+<p>c.close()</p>
+
+<p>conn.close()</p>
+
+<p>redirect(url_for(&#39;login&#39;))</p>
+
+<p>&nbsp;</p>
+
+<p>return render_template(&#39;register.html&#39; , form=form)</p>
+
+<p><br />
+<br />
+<br />
+&nbsp;</p>
+
+<p>@app.route(&#39;/profile&#39;, methods=[&#39;GET&#39;,&#39;POST&#39;])</p>
+
+<p>def profile():</p>
+
+<p>conn=sqlite3.connect(&#39;DataBase.db&#39;)</p>
+
+<p>c=conn.cursor()</p>
+
+<p>c.execute(&#39;SELECT * FROM Users WHERE id = ?&#39;,[session[&#39;id&#39;]])</p>
+
+<p>&nbsp;</p>
+
+<p>for row in c.fetchall() :</p>
+
+<p>user_name=row[1]</p>
+
+<p>user_email=row[2]</p>
+
+<p>user_username=row[3]</p>
+
+<p>user_password=row[4]</p>
+
+<p>&nbsp;</p>
+
+<p>form=RegisterForm(request.form)</p>
+
+<p>&nbsp;</p>
+
+<p>form.name.data=user_name</p>
+
+<p>form.email.data=user_email</p>
+
+<p>form.username.data=user_username</p>
+
+<p>form.password.data=user_password</p>
+
+<p>&nbsp;</p>
+
+<p>if request.method == &#39;POST&#39; and form.validate() :</p>
+
+<p>form.name.data=request.form[&#39;name&#39;]</p>
+
+<p>form.email.data=request.form[&#39;email&#39;]</p>
+
+<p>form.username.data=request.form[&#39;username&#39;]</p>
+
+<p>form.password.data=request.form[&#39;password&#39;]</p>
+
+<p>form.confrim.data=request.form[&#39;confrim&#39;]</p>
+
+<p>&nbsp;</p>
+
+<p>name=request.form[&#39;name&#39;]</p>
+
+<p>email=request.form[&#39;email&#39;]</p>
+
+<p>username=request.form[&#39;username&#39;]</p>
+
+<p>password=request.form[&#39;password&#39;]</p>
+
+<p>confrim=request.form[&#39;confrim&#39;]</p>
+
+<p>if form.validate() :</p>
+
+<p>c.execute(&#39;SELECT * FROM Users WHERE username=? And NOT(id = ?)&#39;,[username,session[&#39;id&#39;]])</p>
+
+<p>result=len(c.fetchall())</p>
+
+<p>if result==0 :</p>
+
+<p>if confrim==password :</p>
+
+<p>c.execute(&#39;UPDATE Users SET name=?, email=?, username=? , password=? WHERE id= ?&#39;,[name,email,username,password,session[&#39;id&#39;]])</p>
+
+<p>conn.commit()</p>
+
+<p>msg=&#39;Profile Updated&#39;</p>
+
+<p>return render_template(&#39;home.html&#39; , msg=msg )</p>
+
+<p>else :</p>
+
+<p>error=&#39;Passwords do not match&#39;</p>
+
+<p>return render_template(&#39;profile.html&#39; , error=error , form=form)</p>
+
+<p>else:</p>
+
+<p>error=&#39;This username ( &#39;+str(username) + &#39; ) has been exists&#39;</p>
+
+<p>return render_template(&#39;profile.html&#39; , error=error , form=form)</p>
+
+<p>conn.commit()</p>
+
+<p>c.close()</p>
+
+<p>conn.close()</p>
+
+<p>&nbsp;</p>
+
+<p>return render_template(&#39;profile.html&#39; , form=form)</p>
+
+<p><br />
+&nbsp;</p>
+
+<p>@app.route(&#39;/delete_comment/&lt;string:id&gt;&#39; , methods=[&#39;GET&#39; , &#39;POST&#39;])</p>
+
+<p>def delete_comment(id):</p>
+
+<p>conn=sqlite3.connect(&#39;DataBase.db&#39;)</p>
+
+<p>c=conn.cursor()</p>
+
+<p>c.execute(&#39;SELECT * FROM Comments WHERE id= ?&#39;,[id])</p>
+
+<p>for row in c.fetchall() :</p>
+
+<p>id_article=row[1]</p>
+
+<p>c.execute(&#39;DELETE FROM Comments WHERE id=?&#39;,[id])</p>
+
+<p>&nbsp;</p>
+
+<p>conn.commit()</p>
+
+<p>c.close()</p>
+
+<p>conn.close()</p>
+
+<p>return redirect(url_for(&#39;article&#39;, id=id_article))</p>
+
+<p><br />
+<br />
+&nbsp;</p>
+
+<p>@app.route(&#39;/login&#39;, methods=[&#39;GET&#39;,&#39;POST&#39;])</p>
+
+<p>def login() :</p>
+
+<p>if request.method == &#39;POST&#39; :</p>
+
+<p>&nbsp;</p>
+
+<p>username=request.form[&#39;username&#39;]</p>
+
+<p>password=request.form[&#39;password&#39;]</p>
+
+<p>&nbsp;</p>
+
+<p>conn=sqlite3.connect(&#39;DataBase.db&#39;)</p>
+
+<p>c=conn.cursor()</p>
+
+<p>c.execute(&#39;SELECT * FROM Users&#39;)</p>
+
+<p>userfound=False</p>
+
+<p>for row in c.fetchall() :</p>
+
+<p>if username==row[3] :</p>
+
+<p>userfound=True</p>
+
+<p>if password==row[4] :</p>
+
+<p>session[&#39;logged_in&#39;] = True</p>
+
+<p>session[&#39;username&#39;]=username</p>
+
+<p>session[&#39;id&#39;]=row[0]</p>
+
+<p>&nbsp;</p>
+
+<p>flash(&#39;You are now logged in&#39;,&#39;success&#39;)</p>
+
+<p>return redirect(url_for(&#39;dashboard&#39;))</p>
+
+<p>c.close()</p>
+
+<p>conn.close()</p>
+
+<p>if userfound==True :</p>
+
+<p>error=&#39;Invalid Login&#39;</p>
+
+<p>return render_template(&#39;login.html&#39; , error=error)</p>
+
+<p>&nbsp;</p>
+
+<p>else :</p>
+
+<p>error=&#39;User Not Found&#39;</p>
+
+<p>return render_template(&#39;login.html&#39; , error=error)</p>
+
+<p>return render_template(&#39;login.html&#39;)</p>
+
+<p><br />
+&nbsp;</p>
+
+<p>@app.route(&#39;/logout&#39;)</p>
+
+<p>def logout() :</p>
+
+<p>session.pop(&#39;logged_in&#39;, None)</p>
+
+<p>flash(&#39;You are now logged out&#39;,&#39;success&#39;)</p>
+
+<p>return redirect(url_for(&#39;login&#39;))</p>
+
+<p><br />
+<br />
+&nbsp;</p>
+
+<p>@app.route(&#39;/dashboard&#39;)</p>
+
+<p>def dashboard() :</p>
+
+<p>conn=sqlite3.connect(&#39;DataBase.db&#39;)</p>
+
+<p>c=conn.cursor()</p>
+
+<p>if (session[&#39;id&#39;]==1) :</p>
+
+<p>c.execute(&#39;SELECT * FROM Articles&#39;)</p>
+
+<p>else :</p>
+
+<p>c.execute(&#39;SELECT * FROM Articles WHERE id_creat = ?&#39;,[session[&#39;id&#39;]])</p>
+
+<p>&nbsp;</p>
+
+<p>articles=[dict(id=row[0],</p>
+
+<p>title=row[1],</p>
+
+<p>writer=row[3],</p>
+
+<p>body=row[4],</p>
+
+<p>create_date=row[5]) for row in c.fetchall()]</p>
+
+<p>result = len(articles)</p>
+
+<p>&nbsp;</p>
+
+<p>if result &gt; 0 :</p>
+
+<p>return render_template(&#39;dashboard.html&#39; , articles=articles)</p>
+
+<p>else:</p>
+
+<p>msg = &#39;No Articles Found&#39;</p>
+
+<p>return render_template(&#39;dashboard.html&#39; , msg=msg)</p>
+
+<p>&nbsp;</p>
+
+<p>conn.commit()</p>
+
+<p>c.close()</p>
+
+<p>conn.close()</p>
+
+<p>&nbsp;</p>
+
+<p>class ArticleForm(form.Form):</p>
+
+<p>title= StringField(&#39;Title&#39;,[validators.Length(min=1 , max=200)])</p>
+
+<p>body = TextAreaField(&#39;Body&#39;, [validators.Length(min=1)])</p>
+
+<p><br />
+&nbsp;</p>
+
+<p>@app.route(&#39;/add_article&#39; , methods=[&#39;GET&#39; , &#39;POST&#39;])</p>
+
+<p>def add_article() :</p>
+
+<p>form=ArticleForm(request.form)</p>
+
+<p>if request.method==&#39;POST&#39; and form.validate() :</p>
+
+<p>title=form.title.data</p>
+
+<p>body=form.body.data</p>
+
+<p>unix=time.time()</p>
+
+<p>create_date=str(datetime.datetime.fromtimestamp(unix).strftime(&#39;%Y-%m-%d %H:%M:%S&#39;))</p>
+
+<p>conn=sqlite3.connect(&#39;DataBase.db&#39;)</p>
+
+<p>c=conn.cursor()</p>
+
+<p>c.execute(&#39;INSERT INTO Articles(title,id_creat,body,writer,create_date) VALUES(? , ? , ? , ? , ?)&#39;,(title,session[&#39;id&#39;],body,session[&#39;username&#39;],create_date))</p>
+
+<p>conn.commit()</p>
+
+<p>c.close()</p>
+
+<p>conn.close()</p>
+
+<p><br />
+&nbsp;</p>
+
+<p>flash(&#39;Article Created&#39; , &#39;success&#39;)</p>
+
+<p>return redirect(url_for(&#39;dashboard&#39;))</p>
+
+<p>&nbsp;</p>
+
+<p>return render_template(&#39;add_article.html&#39; , form=form)</p>
+
+<p><br />
+<br />
+&nbsp;</p>
+
+<p>@app.route(&#39;/edit_article/&lt;string:id&gt;&#39; , methods=[&#39;GET&#39; , &#39;POST&#39;])</p>
+
+<p>def edit_article(id) :</p>
+
+<p>conn=sqlite3.connect(&#39;DataBase.db&#39;)</p>
+
+<p>c=conn.cursor()</p>
+
+<p>c.execute(&#39;SELECT * FROM Articles WHERE id = ?&#39;,(id))</p>
+
+<p>&nbsp;</p>
+
+<p>for row in c.fetchall() :</p>
+
+<p>id_article=row[0]</p>
+
+<p>article_title=row[1]</p>
+
+<p>article_body=row[4]</p>
+
+<p><br />
+&nbsp;</p>
+
+<p>form=ArticleForm(request.form)</p>
+
+<p>form.title.data=article_title</p>
+
+<p>form.body.data = article_body</p>
+
+<p>&nbsp;</p>
+
+<p>if request.method==&#39;POST&#39; and form.validate() :</p>
+
+<p>title=request.form[&#39;title&#39;]</p>
+
+<p>body=request.form[&#39;body&#39;]</p>
+
+<p>&nbsp;</p>
+
+<p>conn=sqlite3.connect(&#39;DataBase.db&#39;)</p>
+
+<p>c=conn.cursor()</p>
+
+<p>&nbsp;</p>
+
+<p>c.execute(&#39;UPDATE Articles SET title=?, body=? WHERE id= ?&#39;,(title,body,id))</p>
+
+<p>conn.commit()</p>
+
+<p>c.close()</p>
+
+<p>conn.close()</p>
+
+<p>&nbsp;</p>
+
+<p>flash(&#39;Article Updated&#39; , &#39;success&#39;)</p>
+
+<p>&nbsp;</p>
+
+<p>return redirect(url_for(&#39;dashboard&#39;))</p>
+
+<p>&nbsp;</p>
+
+<p>return render_template(&#39;edit_article.html&#39;, id_article=id_article , form=form )</p>
+
+<p><br />
+&nbsp;</p>
+
+<p>@app.route(&#39;/delete_article/&lt;string:id&gt;&#39; , methods=[&#39;GET&#39; , &#39;POST&#39;])</p>
+
+<p>def delete_article(id):</p>
+
+<p>conn=sqlite3.connect(&#39;DataBase.db&#39;)</p>
+
+<p>c=conn.cursor()</p>
+
+<p>&nbsp;</p>
+
+<p>c.execute(&#39;DELETE FROM articles WHERE id=?&#39;,(id))</p>
+
+<p>c.execute(&#39;DELETE FROM Comments WHERE id_article=?&#39;,(id))</p>
+
+<p>c.execute(&#39;DELETE FROM Likes WHERE id_article=?&#39;,(id))</p>
+
+<p>&nbsp;</p>
+
+<p>conn.commit()</p>
+
+<p>c.close()</p>
+
+<p>conn.close()</p>
+
+<p>&nbsp;</p>
+
+<p>flash(&#39;Article Deleted&#39; , &#39;success&#39;)</p>
+
+<p>&nbsp;</p>
+
+<p>return redirect(url_for(&#39;dashboard&#39;))</p>
+
+<p><br />
+&nbsp;</p>
+
+<p>if __name__==&#39;__main__&#39;:</p>
+
+<p>app.secret_key=&#39;secret123&#39;</p>
+
+<p>app.run(debug=True)</p>
+
+<p>&nbsp;</p>

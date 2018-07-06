@@ -1,0 +1,50 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+<body background="https://picsbroker.com/wp-content/uploads/2018/02/education-wallpapers-1.jpg"></body>
+<style>
+    input[type=submit] {
+            width: 60%;
+            background-color: rgb(8, 106, 197);
+            color: white;
+            padding: 6.5px 0px;
+            margin: 0px 0;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        input[type=submit]:hover {
+            background-color: #f00a0a;
+        }
+        </style>
+    <h1><font color="black" >Dashboard</font><font color="black" size="4"> Welcome {{session.username}}</font></h1>
+    <a class="btn btn-success" href="/add_article"> Add Article</a>
+    <hr>
+    <table class="table table-striped">
+        <tr>
+            <th></th>
+            <th>Title</th>
+            <th>Writer</th>
+            <th>Date</th>
+            <th></th>
+            <th></th>  
+        </tr>
+        {% for article in articles %}
+            {% if article.id != 1 %}
+                <tr>
+                    <td></td>
+                    <td><font color="black" size="3">{{ article.title }}</font></td>
+                    <td><font color="black" size="3">{{ article.writer }}</font></td>
+                    <td><font color="black" size="3">{{ article.create_date }}</font></td>
+                    <td><a  href="edit_article/{{article.id}}" class="btn btn-default pull-right">Edit</a></td>
+                    <td>
+                        <form action="{{url_for('delete_article', id=article.id)}}" method="POST">
+                            <input type="hidden" name="method" value="DELETE">
+                            <input type="submit" value="Delete" class="btn btn-danger">
+                        </form>
+                    </td> 
+                </tr>
+            {% endif %}
+        {% endfor %}
+    </table>
+{% endblock %}

@@ -1,0 +1,116 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+<body  background="http://alternativealexandriawaterfrontplan.com/wp-content/uploads/light-blue-color_287861.jpg"></body>
+<style>
+    input[type=submit] {
+            width: 10%;
+            background-color: rgb(8, 106, 197);
+            color: white;
+            padding: 6.5px 0px;
+            margin: 0px 0;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        input[type=submit]:hover {
+            background-color: #f00a0a;
+        }
+
+        input[type=like] {
+            width: 10%;
+            background-color: rgba(255, 255, 255, 0);
+            padding: 6.5px 0px;
+            margin: 0px 0;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        </style>
+<div class="jumbotron text-center">
+    <h1><font color="black">{{ title }}</font></h1>
+    <p class="lead"><small><font color="black">Writting by  {{writer}}<br />   on   {{create_date}}</font></small></p>
+</div>
+    <hr>
+    <div><font color="black" size="3">
+        {{body | safe }}
+    </font></div>
+    <br />
+    <br />
+    <br />
+    <br/>
+    <hr>
+    <hr>
+    {% if id_article != 1 %}
+    <class="list-group-item"><label><strong><font color="black" size="5">Liked by </font></strong></label>
+    <br />
+        {% for like in likes %}
+            <class="list-group-item"><label><strong><font color="black" size="3"> @{{like.username}} .</font></strong></label>
+        {% endfor %}
+    {% endif %}
+    {% if session.logged_in != NULL and id_article != 1 %}
+        {% if liked == 0 %}
+            <input type="like"><a href="like_article/" type="like" class="pull-right"><img  src='https://image0.flaticon.com/icons/png/64/149/149219.png'/></a>
+        {% else %}
+        <input type="like"><a href="dislike_article/" class="pull-right"><img  src='https://image.flaticon.com/icons/png/64/148/148838.png'/></a>
+        {% endif %}
+    {% endif %}
+    <br />
+    <br />
+    <br />
+    <br/>
+    {% if id_article != 1 %}
+        <h2><strong><font color="black">Comments</font></strong></h2>
+        <hr>
+    {% endif %}
+    
+    <ul class="list-group">
+        {% for comment in comments %}
+            <class="list-group-item"><label><strong><font color="black" size="3">@{{comment.username}}</font></strong></label>
+            <br />
+            <p><font color="black" size="2">{{ comment.comment }}</foont></p>
+
+            {% if id_user == comment.id_user or id_user==1 %}
+            <form action="{{url_for('delete_comment', id=comment.id)}}" method="POST">
+                <input type="hidden" name="method" value="DELETE">
+                <input type="submit" value="Delete" class="btn btn-danger">
+            </form>
+            {% endif %}
+            <hr>
+        {% endfor %}
+    </ul>
+    {% if id_article != 1 %}
+        <hr>
+        <br />
+    <br />
+    <br />
+    <br />
+    {% endif %}
+    {% if session.logged_in != NULL and id_article != 1 %}
+    <form method="POST" action="">
+        <class="list-group-item"><label><strong><font color="black" size="5">Write Comment </font></strong></label>
+        <div class="form-group">
+            <input type="text" name="comment" color="black" placeholder="Write Comment ..." class="form-control">
+        </div>
+        <td><button type = "submit" class="btn btn-primary" value="Send">Send</button></td>
+    </from>
+    {% endif %}
+    {% if id_article == 1 %}
+            <p><a href="{{url_for('edit_article', id=id_article)}}"><input type="submit" class="btn btn-primary" value="Edit"></a></p>
+    {% endif %}
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+
+
+{% endblock %}

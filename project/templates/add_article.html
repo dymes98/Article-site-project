@@ -1,0 +1,21 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+<body background="https://www.hypnosis-weekly.com/wp-content/uploads/2014/06/background.jpg"></body>
+<h1><strong><font color="black">Add Article</font></strong></h1>
+<br />
+    {% from "includes/_formhelpers.html" import render_field %}
+    <form method="POST" action="">
+        <div class="form-group">
+            <label><strong><font color="black" size="4">Title</strong></label>
+            {{ render_field(form.title , type="text" , class_="form-control") }}
+        </div>
+        <br />
+        <div class="form-group">
+            <label>Body</font></label>
+            {{ render_field(form.body ,  type="text" , class_="form-control" , id="editor") }}
+        </div>
+        <br />
+        <p><input class="btn btn-primary" type="submit"  value="Submit">
+    </from>
+{% endblock %}

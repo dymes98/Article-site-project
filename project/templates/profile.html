@@ -1,0 +1,40 @@
+{% extends 'layout.html' %}
+
+
+
+{% block body %}
+<body background="https://wallpaper-house.com/data/out/7/wallpaper2you_202136.jpg"></body>
+    <h1><strong><font color="black">Profile</font></strong></h1>
+    {% from "includes/_formhelpers.html" import render_field %}
+    <form method="POST" action="">
+        <div class="form-group">
+            <p><strong><font color="black" size="4" >Name</p>
+            {{render_field(form.name , type="text" , class_="form-control")}}
+        </div>
+        <div class="form-group">
+            <p>Email</p>
+            {{render_field(form.email , type="text" , class_="form-control")}}
+        </div>
+        <br />
+        <div class="form-group">
+            <p>Username</p>
+            {{render_field(form.username , type="text" , class_="form-control")}}
+        </div>
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <div class="form-group">
+            <p>Password</p>
+            {{render_field(form.password , type="password" , class_="form-control")}}
+        </div>
+        <div class="form-group">
+            <p>Confrim Password</font></strong></p>
+            <p>{{render_field(form.confrim , type="password" , class_="form-control")}}</p>
+        </div>
+        <p><input type="submit" class="btn btn-primary" value="Update"></p>
+    </form>
+{% endblock %}

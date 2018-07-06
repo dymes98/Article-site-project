@@ -1,0 +1,33 @@
+{% extends 'layout.html' %}
+
+
+
+{% block body %}
+<body background="https://www.fusionmarketing.com.au/wp-content/uploads/2017/07/The-art-of-sales-through-story-telling.jpg"></body>
+    <div class="jumbotron text-center">
+    <h1>Articles</h1>
+    </div>
+    <table class="table table-striped">
+            <tr>  
+            </tr>
+            {% for article in articles %}
+                {% if article.id !=1 %}
+                <tr>
+                    <td>
+                    </td>
+                    <td>
+                    <td><a href="article/{{article.id}}"><strong><font color="black" size="4">{{article.title}}</font></strong></a></td>
+                        {% for like in likes %}
+                            {% if like.id_user == session.id and article.id == like.id_article and session.logged_in != NULL  %}
+                                <td><a class="pull-right"><img  src='https://image.flaticon.com/icons/png/32/148/148838.png'/></a></td>
+                            {% endif %}
+                        {% endfor %}
+                    <td></td>
+                    <td>
+                    <td>
+                    <td>
+                </tr>
+                {% endif %}
+            {% endfor %}
+        </table>
+{% endblock %}

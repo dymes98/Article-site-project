@@ -217,7 +217,7 @@
 
 <p>conn.close()</p>
 
-<p>elif result_article == 0 :</p>
+<p>elif result_article == 1 :</p>
 
 <p>error = &#39;Dont Login&#39;</p>
 

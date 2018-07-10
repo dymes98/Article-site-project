@@ -70,7 +70,7 @@ def articles():
         conn.commit()
         c.close()
         conn.close()
-    elif result_article == 0 :
+    elif result_article == 1 :
         error = 'Dont Login'
         msg = 'NO Articles Found'
         return render_template('articles.html' , error=error , msg=msg)
